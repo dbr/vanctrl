@@ -108,6 +108,24 @@ class Esmart:
                             if self.callback is not None:
                                 self.callback(data)
 
+    def reconnect(self):
+        print("Serial port error, fixing")
+        self.ser.close()
+        opened = False
+        while not opened:
+            print("Retrying connection")
+            try:
+                self.ser = serial.Serial(self.port, 38400, timeout=0)
+                time.sleep(0.5)
+                if self.ser.read(100):
+                    opened = True
+                else:
+                    self.ser.close()
+            except serial.serialutil.SerialException:
+                time.sleep(0.5)
+                self.ser.close()
+        print("Error fixed")
+
     def tick(self):
         try:
             while self.ser.inWaiting():
@@ -121,18 +139,4 @@ class Esmart:
                 #self.ser.write(LOAD_OFF)
 
         except IOError:
-            print("Serial port error, fixing")
-            self.ser.close()
-            opened = 0
-            while not opened:
-                try:
-                    self.ser = serial.Serial(self.port, 38400, timeout=0)
-                    time.sleep(0.5)
-                    if self.ser.read(100):
-                        opened = 1
-                    else:
-                        self.ser.close()
-                except serial.serialutil.SerialException:
-                    time.sleep(0.5)
-                    self.ser.close()
-            print("Error fixed")
+            self.reconnect()
