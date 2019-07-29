@@ -1,7 +1,9 @@
+import sys
 import json
 import datetime
 import fileinput
 import influxdb
+import requests
 
 
 class InfluxLogger(object):
@@ -27,7 +29,19 @@ class InfluxLogger(object):
         self.connection.write_points(points)
 
 
-x = InfluxLogger()
-for line in fileinput.input():
-    data = json.loads(line)
-    x.handle_data(data)
+def main():
+    x = InfluxLogger()
+    for line in fileinput.input():
+        try:
+            data = json.loads(line)
+            x.handle_data(data)
+        except json.decoder.JSONDecodeError as e:
+            print("Error decoding line: %s" % e, file=sys.stderr)
+        except requests.exceptions.RequestException as e:
+            print("Connection error: %s" % e, file=sys.stderr)
+        except Exception as e:
+            print("Unhandled exception: %s" % e, file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()
